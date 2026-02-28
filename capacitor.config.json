@@ -1,0 +1,8 @@
+{
+  "appId": "com.yourname.tetonor",
+  "appName": "Tetonor",
+  "webDir": "www",
+  "android": {
+    "minSdkVersion": 22
+  }
+}

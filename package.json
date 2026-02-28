@@ -1,0 +1,12 @@
+{
+  "name": "tetonor",
+  "version": "1.0.0",
+  "description": "Tetonor - Number Logic Puzzle",
+  "main": "index.js",
+  "scripts": {
+    "build": "echo No build step required"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "UNLICENSED"
+}

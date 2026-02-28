@@ -1,0 +1,1263 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Tetonor</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=DM+Mono:wght@400;500&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #0f0e11;
+    --surface: #1a1820;
+    --surface2: #231f2e;
+    --border: #2e2a3a;
+    --accent: #c8a96e;
+    --accent2: #7c6af7;
+    --text: #e8e4f0;
+    --muted: #6b6480;
+    --green: #5dba89;
+    --red: #e06b6b;
+    --yellow: #e0b96b;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'DM Sans', sans-serif;
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 20px;
+    background-image: radial-gradient(ellipse at 20% 0%, rgba(124,106,247,0.07) 0%, transparent 60%),
+                      radial-gradient(ellipse at 80% 100%, rgba(200,169,110,0.05) 0%, transparent 50%);
+  }
+
+  header {
+    width: 100%;
+    max-width: 700px;
+    display: flex;
+    align-items: baseline;
+    gap: 12px;
+    margin-bottom: 8px;
+    padding-bottom: 16px;
+    border-bottom: 1px solid var(--border);
+  }
+
+  h1 {
+    font-family: 'DM Serif Display', serif;
+    font-size: clamp(2rem, 5vw, 3rem);
+    color: var(--accent);
+    letter-spacing: -0.02em;
+  }
+
+  .subtitle {
+    font-size: 0.75rem;
+    color: var(--muted);
+    text-transform: uppercase;
+    letter-spacing: 0.12em;
+    font-weight: 500;
+  }
+  header { position: relative; }
+  .how-to-link {
+    margin-left: auto;
+    font-size: 0.75rem;
+    color: var(--muted);
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    font-weight: 500;
+    cursor: pointer;
+    user-select: none;
+  }
+  .how-to-link:hover { color: var(--text); }
+  .how-to-modal {
+    display: none;
+    position: fixed;
+    inset: 0;
+    background: rgba(0,0,0,0.6);
+    z-index: 200;
+    align-items: center;
+    justify-content: center;
+  }
+  .how-to-modal.show { display: flex; }
+  .how-to-box {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    padding: 42px 48px;
+    max-width: 570px;
+    width: 90%;
+    font-size: 1.275rem;
+    color: var(--muted);
+    line-height: 1.8;
+  }
+  .how-to-box strong { color: var(--text); }
+  .how-to-title {
+    font-family: 'DM Serif Display', serif;
+    font-size: 2.1rem;
+    color: var(--accent);
+    margin-bottom: 14px;
+  }
+
+  .controls-row {
+    width: 100%;
+    max-width: 700px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 24px;
+  }
+
+  .new-puzzle-btn {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    cursor: pointer;
+    user-select: none;
+    line-height: 1;
+    padding: 0 16px;
+    height: 36px;
+  }
+
+  .new-puzzle-btn span {
+    line-height: 1;
+  }
+
+  .diff-dropdown {
+    position: relative;
+  }
+
+  .diff-current {
+    color: var(--accent);
+    cursor: pointer;
+    font-size: 0.85rem;
+    white-space: nowrap;
+  }
+
+  .diff-menu {
+    display: none;
+    position: absolute;
+    top: calc(100% + 6px);
+    left: 0;
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    overflow: hidden;
+    z-index: 50;
+    min-width: 100px;
+  }
+
+  .diff-menu div {
+    padding: 8px 14px;
+    font-size: 0.85rem;
+    color: var(--text);
+    cursor: pointer;
+    transition: background 0.1s;
+  }
+
+  .diff-menu div:hover { background: var(--border); color: var(--accent); }
+
+  .diff-menu.open { display: block; }
+
+  .btn {
+    background: transparent;
+    border: 1px solid var(--border);
+    color: var(--text);
+    padding: 0 16px;
+    height: 36px;
+    border-radius: 6px;
+    font-family: 'DM Sans', sans-serif;
+    font-size: 0.85rem;
+    cursor: pointer;
+    transition: all 0.15s;
+    font-weight: 400;
+    display: flex;
+    align-items: center;
+  }
+  .btn:hover { border-color: var(--accent2); color: var(--accent2); }
+  .btn:disabled { opacity: 0.35; cursor: not-allowed; pointer-events: none; }
+
+  .assist-label {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 0.85rem;
+    color: var(--muted);
+    cursor: pointer;
+    user-select: none;
+    white-space: nowrap;
+  }
+  .assist-label input { accent-color: var(--accent2); cursor: pointer; }
+
+  .assist-tip-wrap {
+    position: relative;
+    display: inline-flex;
+    align-items: center;
+  }
+
+  .assist-tip-icon {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 16px;
+    height: 16px;
+    border-radius: 50%;
+    border: 1px solid var(--muted);
+    color: var(--muted);
+    font-size: 0.7rem;
+    cursor: default;
+    line-height: 1;
+    flex-shrink: 0;
+  }
+
+  .assist-tip-box {
+    display: none;
+    position: absolute;
+    bottom: calc(100% + 8px);
+    right: 0;
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 10px 12px;
+    font-size: 0.78rem;
+    color: var(--text);
+    width: 220px;
+    white-space: normal;
+    word-wrap: break-word;
+    line-height: 1.5;
+    z-index: 100;
+    pointer-events: none;
+    box-sizing: border-box;
+  }
+
+  .assist-tip-wrap:hover .assist-tip-box { display: block; }
+  .btn.primary { background: var(--accent2); border-color: var(--accent2); color: white; }
+  .btn.primary:hover { opacity: 0.85; }
+
+  /* Main layout */
+  .game-area {
+    width: 100%;
+    max-width: 700px;
+    display: flex;
+    flex-direction: column;
+    gap: 24px;
+  }
+
+  /* Grid */
+  .grid-container {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    padding: 20px;
+  }
+
+  .grid-label {
+    font-size: 0.7rem;
+    text-transform: uppercase;
+    letter-spacing: 0.14em;
+    color: var(--muted);
+    margin-bottom: 14px;
+    font-weight: 500;
+  }
+
+  .grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 10px;
+  }
+
+  .cell {
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 12px 8px 0 8px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0;
+    transition: border-color 0.15s;
+    cursor: pointer;
+    min-height: 110px;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .cell:hover { border-color: var(--accent2); }
+  .cell.selected { border-color: var(--accent2); background: rgba(124,106,247,0.08); }
+  .cell.correct { border-color: var(--green); background: rgba(93,186,137,0.06); }
+  .cell.wrong { border-color: var(--red); background: rgba(224,107,107,0.06); }
+
+  @keyframes shake {
+    0%, 100% { transform: translateX(0); }
+    20%       { transform: translateX(-6px); }
+    40%       { transform: translateX(6px); }
+    60%       { transform: translateX(-4px); }
+    80%       { transform: translateX(4px); }
+  }
+  .cell.shake { animation: shake 0.4s ease; }
+
+  .cell-target {
+    font-family: 'DM Serif Display', serif;
+    font-size: 2.7rem;
+    color: var(--accent);
+    line-height: 1;
+    margin-bottom: auto;
+    padding-bottom: 10px;
+  }
+
+  .cell-entry {
+    display: grid;
+    grid-template-columns: 1fr 1fr 1fr;
+    width: calc(100% + 16px);
+    margin-left: -8px;
+    margin-right: -8px;
+    margin-bottom: 0;
+    margin-top: 0;
+    border-top: 1px solid var(--border);
+    overflow: hidden;
+    border-radius: 0 0 9px 9px;
+  }
+
+  .cell-entry .sub-box {
+    height: 40px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-family: 'DM Mono', monospace;
+    font-size: 1rem;
+    color: var(--muted);
+  }
+
+  .cell-entry .sub-box + .sub-box {
+    border-left: 1px solid var(--border);
+  }
+
+  .cell-entry.filled .sub-box { color: var(--accent); }
+  .cell-entry.filled .sub-box.sub-op { color: var(--accent2); }
+
+  /* Strip */
+  .strip-container {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    padding: 20px;
+  }
+
+  .strip-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 14px;
+  }
+
+  .strip {
+    display: grid;
+    grid-template-columns: repeat(8, 1fr);
+    gap: 8px;
+  }
+
+  .strip-num {
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    height: 52px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-family: 'DM Mono', monospace;
+    font-size: 1rem;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.15s;
+    position: relative;
+    user-select: none;
+  }
+
+  .strip-num:hover:not(.hidden-num):not(.used) { border-color: var(--accent2); color: var(--accent2); transform: translateY(-2px); }
+  .strip-num.selected-strip { border-color: var(--accent2); background: rgba(124,106,247,0.15); color: var(--accent2); }
+  .strip-num.used-once {
+  border-color: var(--accent) !important;
+  color: var(--accent) !important;
+}
+.strip-num.used { opacity: 0.35 !important; border-color: transparent !important; border-style: solid !important; color: var(--muted) !important; pointer-events: none !important; }
+  .strip-num.hidden-num {
+    color: transparent;
+    cursor: pointer;
+    border-style: dashed;
+  }
+  .strip-num.hidden-num::after {
+    content: '?';
+    position: absolute;
+    color: var(--muted);
+    font-family: 'DM Serif Display', serif;
+    font-size: 1.1rem;
+  }
+  .strip-num.hidden-revealed {
+    color: var(--accent);
+  }
+
+  /* Hidden number input modal */
+  .modal-backdrop {
+    display: none;
+    position: fixed;
+    inset: 0;
+    background: rgba(15,14,17,0.7);
+    backdrop-filter: blur(6px);
+    z-index: 50;
+    align-items: center;
+    justify-content: center;
+  }
+  .modal-backdrop.show { display: flex; }
+  .modal {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    padding: 28px 32px;
+    min-width: 280px;
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+  }
+  .modal-title {
+    font-family: 'DM Serif Display', serif;
+    font-size: 1.3rem;
+    color: var(--accent);
+  }
+  .modal-sub {
+    font-size: 0.8rem;
+    color: var(--muted);
+    margin-top: -8px;
+  }
+  .modal-input {
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 10px 14px;
+    font-family: 'DM Mono', monospace;
+    font-size: 1.1rem;
+    color: var(--text);
+    width: 100%;
+    outline: none;
+    transition: border-color 0.15s;
+  }
+  .modal-input:focus { border-color: var(--accent2); }
+  .modal-row { display: flex; gap: 8px; }
+  .modal-hint {
+    font-size: 0.75rem;
+    color: var(--muted);
+    font-style: italic;
+  }
+
+  /* Op selector */
+  .op-selector {
+    display: flex;
+    gap: 8px;
+    justify-content: center;
+  }
+
+  .op-btn {
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    color: var(--muted);
+    width: 44px;
+    height: 44px;
+    border-radius: 8px;
+    font-size: 1.1rem;
+    cursor: pointer;
+    transition: all 0.15s;
+    font-family: 'DM Mono', monospace;
+    display: flex; align-items: center; justify-content: center;
+  }
+  .op-btn:hover { border-color: var(--accent2); color: var(--accent2); }
+
+
+  /* Entry panel */
+  .entry-panel {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    padding: 14px 20px;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+  }
+
+  .entry-row {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+  .entry-row .status-bar {
+    flex: 1;
+    height: 36px;
+    font-size: 0.82rem;
+  }
+
+  .status-bar {
+    height: 40px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.9rem;
+    border-radius: 8px;
+    font-weight: 500;
+    transition: all 0.3s;
+    letter-spacing: 0.02em;
+  }
+  .status-bar.success { background: rgba(93,186,137,0.12); color: var(--green); border: 1px solid rgba(93,186,137,0.25); }
+  .status-bar.error { background: rgba(224,107,107,0.12); color: var(--red); border: 1px solid rgba(224,107,107,0.2); }
+  .status-bar.info { background: rgba(124,106,247,0.1); color: var(--accent2); border: 1px solid rgba(124,106,247,0.2); }
+  .status-bar.empty { border: 1px solid transparent; }
+
+  /* Rules panel */
+  .rules {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    padding: 16px 20px;
+    font-size: 0.8rem;
+    color: var(--muted);
+    line-height: 1.7;
+  }
+  .rules strong { color: var(--text); }
+
+  /* Win overlay */
+  .win-overlay {
+    display: none;
+    position: fixed;
+    inset: 0;
+    background: rgba(15,14,17,0.85);
+    backdrop-filter: blur(8px);
+    z-index: 100;
+    align-items: center;
+    justify-content: center;
+    flex-direction: column;
+    gap: 20px;
+  }
+  .win-overlay.show { display: flex; }
+  .win-box {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 20px;
+    padding: 40px 60px;
+    text-align: center;
+    max-width: 400px;
+  }
+  .win-title {
+    font-family: 'DM Serif Display', serif;
+    font-size: 2.5rem;
+    color: var(--green);
+    margin-bottom: 8px;
+  }
+  .win-sub { color: var(--muted); font-size: 0.9rem; margin-bottom: 24px; }
+
+  .progress-count {
+    font-size: 0.8rem;
+    color: var(--muted);
+    font-family: 'DM Mono', monospace;
+    white-space: nowrap;
+    flex-shrink: 0;
+  }
+
+  @media (max-width: 500px) {
+    .strip { grid-template-columns: repeat(8, 1fr); }
+    .grid { gap: 6px; }
+    .cell { min-height: 76px; }
+    .cell-target { font-size: 1.8rem; }
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <h1>Tetonor</h1>
+  <span class="subtitle">Number Logic Puzzle</span>
+  <span class="how-to-link" onclick="document.getElementById('howToModal').classList.add('show')">How to play</span>
+</header>
+
+<!-- How to play modal -->
+<div class="how-to-modal" id="howToModal" onclick="if(event.target===this)this.classList.remove('show')">
+  <div class="how-to-box">
+    <div class="how-to-title">How to play</div>
+    Each target number in the grid is the <strong>sum or product</strong> of a pair from the bottom strip.
+    Each pair must be used <strong>exactly twice</strong>: once as addition, once as multiplication.
+    Click a grid cell to select it, pick two strip numbers and an operator (+/×) — the entry confirms automatically.
+    Hidden strip numbers (<strong>?</strong>) must be deduced — click them to enter your guess. They appear in ascending order.
+  </div>
+</div>
+
+<div class="controls-row">
+  <div class="new-puzzle-btn btn" id="newPuzzleBtn">
+    <span onclick="generatePuzzle()">New Puzzle:</span>
+    <div class="diff-dropdown" id="diffDropdown">
+      <span class="diff-current" id="diffCurrent" onclick="toggleDiffMenu(event)">Easy ▾</span>
+      <div class="diff-menu" id="diffMenu">
+        <div onclick="chooseDiff('easy','Easy',event)">Easy</div>
+        <div onclick="chooseDiff('medium','Medium',event)">Medium</div>
+        <div onclick="chooseDiff('hard','Hard',event)">Hard</div>
+      </div>
+    </div>
+  </div>
+  <label class="assist-label" style="margin-left:auto">
+    <input type="checkbox" id="assistCheck" checked> Assist
+    <span class="assist-tip-wrap">
+      <span class="assist-tip-icon">?</span>
+      <span class="assist-tip-box">When you pick a number that's already been used, Assist automatically fills in its partner and flips the operator (+↔×).</span>
+    </span>
+  </label>
+  <button class="btn" id="checkBtn" onclick="checkAll()">Check</button>
+  <button class="btn primary" onclick="document.getElementById('revealModal').classList.add('show')">Reveal</button>
+</div>
+
+<div class="game-area">
+  <!-- Grid -->
+  <div class="grid-container">
+    <div class="grid" id="grid"></div>
+  </div>
+
+  <!-- Strip + controls -->
+  <div class="strip-container">
+    <div class="strip" id="strip"></div>
+    <div class="entry-row" style="margin-top:14px;">
+      <button class="op-btn" id="opAdd" onclick="selectOp('+')">+</button>
+      <button class="op-btn" id="opMul" onclick="selectOp('×')">×</button>
+      <div class="status-bar empty" id="statusBar"></div>
+      <span class="progress-count" id="progressCount">0 / 16</span>
+      <button class="btn" id="clearBtn" onclick="clearEntry()">Clear</button>
+    </div>
+  </div>
+
+
+</div>
+
+<!-- New game confirmation modal -->
+<div class="modal-backdrop" id="newGameModal">
+  <div class="modal">
+    <div class="modal-title">Start New Puzzle?</div>
+    <div class="modal-sub">You have a puzzle in progress. Starting a new one will clear your progress.</div>
+    <div class="modal-row">
+      <button class="btn" onclick="closeNewGameModal()">Cancel</button>
+      <button class="btn primary" onclick="confirmNewGame()">Start New</button>
+    </div>
+  </div>
+</div>
+
+<!-- Reveal confirmation modal -->
+<div class="modal-backdrop" id="revealModal">
+  <div class="modal">
+    <div class="modal-title">Reveal Solution?</div>
+    <div class="modal-sub">This will show all answers and end the puzzle.</div>
+    <div class="modal-row">
+      <button class="btn" onclick="document.getElementById('revealModal').classList.remove('show')">Cancel</button>
+      <button class="btn primary" onclick="confirmReveal()">Reveal</button>
+    </div>
+  </div>
+</div>
+
+<!-- Hidden number modal -->
+<div class="modal-backdrop" id="hiddenModal">
+  <div class="modal">
+    <div class="modal-title">Enter Hidden Number</div>
+    <div class="modal-sub">What number do you think is hidden here?</div>
+    <input class="modal-input" id="hiddenInput" type="text" inputmode="numeric" pattern="[0-9]*" placeholder="Your deduced value…" oninput="this.value=this.value.replace(/[^0-9]/,'')">
+    <div class="modal-row">
+      <button class="btn" onclick="closeHiddenModal()">Cancel</button>
+      <button class="btn primary" onclick="confirmHidden()">Confirm</button>
+    </div>
+  </div>
+</div>
+
+<!-- Win overlay -->
+<div class="win-overlay" id="winOverlay">
+  <div class="win-box">
+    <div class="win-title">Solved!</div>
+    <div class="win-sub" id="winSub">Excellent arithmetic deduction.</div>
+    <button class="btn primary" style="display:block;margin:0 auto;" onclick="document.getElementById('winOverlay').classList.remove('show'); generatePuzzle()">Play Again</button>
+  </div>
+</div>
+
+<script>
+// ── State ──────────────────────────────────────────────────────────────
+let difficulty = 'easy';
+let puzzle = null;
+let selectedCell = null;
+let entryNums = [];
+let entryOp = null;
+let stripSelected = [];
+
+// ── Difficulty config ───────────────────────────────────────────────────
+const DIFF = {
+  easy:   { min: 2,  max: 20, hidden: 5,  pairs: 8 },
+  medium: { min: 5,  max: 35, hidden: 7,  pairs: 8 },
+  hard:   { min: 10, max: 50, hidden: 11, pairs: 8 },
+};
+
+function setDifficulty(d) {
+  difficulty = d;
+  generatePuzzle();
+}
+
+function toggleDiffMenu(e) {
+  e.stopPropagation();
+  document.getElementById('diffMenu').classList.toggle('open');
+}
+
+let pendingDiff = null;
+
+function chooseDiff(val, label, e) {
+  e.stopPropagation();
+  document.getElementById('diffMenu').classList.remove('open');
+  if (puzzle) {
+    pendingDiff = { val, label };
+    document.getElementById('newGameModal').classList.add('show');
+  } else {
+    difficulty = val;
+    document.getElementById('diffCurrent').textContent = label + ' ▾';
+    generatePuzzle();
+  }
+}
+
+function closeNewGameModal() {
+  pendingDiff = null;
+  document.getElementById('newGameModal').classList.remove('show');
+}
+
+function confirmNewGame() {
+  document.getElementById('newGameModal').classList.remove('show');
+  if (pendingDiff) {
+    difficulty = pendingDiff.val;
+    document.getElementById('diffCurrent').textContent = pendingDiff.label + ' ▾';
+    pendingDiff = null;
+  }
+  generatePuzzle();
+}
+
+document.addEventListener('click', () => {
+  document.getElementById('diffMenu').classList.remove('open');
+});
+
+// ── Puzzle generation ───────────────────────────────────────────────────
+function generatePuzzle() {
+  const cfg = DIFF[difficulty];
+  let pairs = [];
+
+  // Retry until we get exactly 8 pairs
+  while (pairs.length < cfg.pairs) {
+    pairs = [];
+    const usedPairs = new Set();
+    const usedStripVals = new Set();
+    let attempts = 0;
+    while (pairs.length < cfg.pairs && attempts < 10000) {
+      attempts++;
+      const a = randInt(cfg.min, Math.floor(cfg.max * 0.6));
+      const b = randInt(cfg.min, cfg.max);
+      if (a === b) continue;
+      const sum = a + b;
+      const prod = a * b;
+      const key = `${Math.min(a,b)},${Math.max(a,b)}`;
+      if (!usedPairs.has(key) && sum !== prod && sum <= 200 && prod <= 500
+          && !usedStripVals.has(a) && !usedStripVals.has(b)) {
+        usedPairs.add(key);
+        usedStripVals.add(a);
+        usedStripVals.add(b);
+        pairs.push({ a, b, sum, prod });
+      }
+    }
+  }
+
+  // Build 4x4 grid: 16 cells, each pair contributes sum and prod → 16 values
+  const gridValues = [];
+  for (const p of pairs) {
+    gridValues.push({ value: p.sum, pair: p, op: '+' });
+    gridValues.push({ value: p.prod, pair: p, op: '×' });
+  }
+  // Shuffle
+  shuffle(gridValues);
+
+  // Strip: all a's and b's sorted (all unique now)
+  const stripNums = pairs.flatMap(p => [p.a, p.b]).sort((x,y) => x - y);
+
+  // Choose hidden indices
+  const hiddenCount = cfg.hidden;
+  const hiddenSet = new Set();
+  while (hiddenSet.size < hiddenCount) {
+    hiddenSet.add(randInt(0, stripNums.length - 1));
+  }
+
+  puzzle = {
+    grid: gridValues,
+    strip: stripNums,
+    pairs,
+    hidden: hiddenSet,
+    userEntries: Array(16).fill(null),
+  };
+
+  clearState();
+  renderGrid();
+  renderStrip();
+  updateProgress();
+  setStatus('', '');
+  document.getElementById('checkBtn').disabled = false;
+  selectedCell = null;
+  setTimeout(updateControlsState, 0);
+}
+
+function clearState() {
+  selectedCell = null;
+  entryNums = [];
+  stripSelected = [];
+  entryOp = null;
+}
+
+function randInt(min, max) {
+  return Math.floor(Math.random() * (max - min + 1)) + min;
+}
+
+function shuffle(arr) {
+  for (let i = arr.length - 1; i > 0; i--) {
+    const j = randInt(0, i);
+    [arr[i], arr[j]] = [arr[j], arr[i]];
+  }
+}
+
+// ── Render ─────────────────────────────────────────────────────────────
+function renderGrid() {
+  const g = document.getElementById('grid');
+  g.innerHTML = '';
+  puzzle.grid.forEach((cell, i) => {
+    const div = document.createElement('div');
+    div.className = 'cell';
+    div.dataset.idx = i;
+    div.onclick = () => selectCell(i);
+
+    const target = document.createElement('div');
+    target.className = 'cell-target';
+    target.textContent = cell.value;
+
+    const entry = document.createElement('div');
+    entry.className = 'cell-entry';
+    entry.id = `cell-entry-${i}`;
+    entry.innerHTML = `<span class="sub-box"></span><span class="sub-box sub-op"></span><span class="sub-box"></span>`;
+
+    div.appendChild(target);
+    div.appendChild(entry);
+    g.appendChild(div);
+    updateCellEntry(i);
+  });
+}
+
+function updateCellEntry(i) {
+  const entry = document.getElementById(`cell-entry-${i}`);
+  if (!entry) return;
+  const ue = puzzle.userEntries[i];
+  if (ue) {
+    entry.className = 'cell-entry filled';
+    entry.innerHTML = `<span class="sub-box">${ue.a}</span><span class="sub-box sub-op">${ue.op}</span><span class="sub-box">${ue.b}</span>`;
+  } else {
+    entry.className = 'cell-entry';
+    entry.innerHTML = `<span class="sub-box"></span><span class="sub-box sub-op"></span><span class="sub-box"></span>`;
+  }
+}
+
+function renderStrip() {
+  const s = document.getElementById('strip');
+  s.innerHTML = '';
+  puzzle.strip.forEach((num, i) => {
+    const div = document.createElement('div');
+    div.className = 'strip-num' + (puzzle.hidden.has(i) ? ' hidden-num' : '');
+    div.dataset.idx = i;
+    div.dataset.val = num;
+    div.textContent = puzzle.hidden.has(i) ? '' : num;
+    if (puzzle.hidden.has(i)) {
+      div.onclick = () => {
+        if (selectedCell === null) { setStatus('Select a grid cell first.', 'error'); return; }
+        if (entryNums.length >= 1 && entryOp === null) { setStatus('Choose + or × before selecting a second number.', 'error'); return; }
+        openHiddenModal(i);
+      };
+    } else {
+      div.onclick = () => pickStripNum(i, num);
+    }
+    s.appendChild(div);
+  });
+}
+
+// ── Interaction ─────────────────────────────────────────────────────────
+function selectCell(i) {
+  // Reset previous cell's in-progress display
+  if (selectedCell !== null && selectedCell !== i) {
+    updateCellEntry(selectedCell); // restore saved state (or blank)
+  }
+  document.querySelectorAll('.cell').forEach(c => c.classList.remove('selected'));
+  entryNums = [];
+  entryOp = null;
+  stripSelected = [];
+  document.querySelectorAll('.strip-num').forEach(s => s.classList.remove('selected-strip'));
+
+  selectedCell = i;
+  document.querySelector(`.cell[data-idx="${i}"]`).classList.add('selected');
+  updateCellEntry(i);
+  updateControlsState();
+  setStatus(`${puzzle.grid[i].value}`, 'info');
+}
+
+function pickStripNum(i, val) {
+  if (selectedCell === null) {
+    setStatus('Select a grid cell first.', 'error');
+    return;
+  }
+  if (entryNums.length >= 2) {
+    setStatus('Already have two numbers. Clear to start over.', 'error');
+    return;
+  }
+  if (entryNums.length === 1 && entryOp === null) {
+    setStatus('Pick an operator first.', 'error');
+    return;
+  }
+  // Mark used-per-strip tracking: block picking the same strip tile twice
+  if (stripSelected.includes(i)) {
+    setStatus('Pick a different strip number.', 'error');
+    return;
+  }
+  stripSelected.push(i);
+  entryNums.push(val);
+  document.querySelector(`.strip-num[data-idx="${i}"]`).classList.add('selected-strip');
+  const bar = document.getElementById('statusBar');
+  if (bar.classList.contains('error')) setStatus(`${puzzle.grid[selectedCell].value}`, 'info');
+  updateEntryDisplay();
+
+  // Assist: if this is the first number and assist is on, look for a prior use of this value
+  if (entryNums.length === 1 && document.getElementById('assistCheck').checked) {
+    // Find a completed cell that used `val` and get its partner + op
+    for (let ci = 0; ci < puzzle.userEntries.length; ci++) {
+      const ue = puzzle.userEntries[ci];
+      if (!ue) continue;
+      if (ue.a === val || ue.b === val) {
+        const partner = ue.a === val ? ue.b : ue.a;
+        const oppositeOp = ue.op === '+' ? '×' : '+';
+        // Autofill op then partner
+        entryOp = oppositeOp;
+        updateEntryDisplay();
+        // Find the strip index for partner
+        const partnerIdx = puzzle.strip.findIndex((n, si) => n === partner &&
+          !document.querySelector(`.strip-num[data-idx="${si}"]`).classList.contains('used') &&
+          !stripSelected.includes(si));
+        if (partnerIdx !== -1) {
+          stripSelected.push(partnerIdx);
+          entryNums.push(partner);
+          document.querySelector(`.strip-num[data-idx="${partnerIdx}"]`).classList.add('selected-strip');
+          updateEntryDisplay();
+        }
+        break;
+      }
+    }
+  }
+}
+
+function selectOp(op) {
+  if (selectedCell === null) return;
+  entryOp = op;
+  const bar = document.getElementById('statusBar');
+  if (bar.classList.contains('error')) setStatus('', '');
+  updateEntryDisplay();
+}
+
+function updateControlsState() {
+  const hasCell = selectedCell !== null;
+  document.getElementById('opAdd').disabled = !hasCell;
+  document.getElementById('opMul').disabled = !hasCell;
+  document.getElementById('clearBtn').disabled = !hasCell;
+  // Grey out strip numbers (skip used ones — they have their own CSS styling)
+  document.querySelectorAll('.strip-num:not(.used)').forEach(el => {
+    el.style.pointerEvents = hasCell ? '' : 'none';
+    el.style.opacity = hasCell ? '' : '0.35';
+  });
+}
+
+function updateEntryDisplay() {
+  if (selectedCell === null) return;
+  const entry = document.getElementById(`cell-entry-${selectedCell}`);
+  if (!entry) return;
+  const boxes = entry.querySelectorAll('.sub-box');
+  boxes[0].textContent = entryNums.length >= 1 ? entryNums[0] : '';
+  boxes[1].textContent = entryOp !== null ? entryOp : '';
+  boxes[2].textContent = entryNums.length >= 2 ? entryNums[1] : '';
+  // Auto-confirm once all three are filled
+  if (entryNums.length === 2 && entryOp !== null) {
+    setTimeout(tryAutoConfirm, 120); // brief delay so player sees the filled state
+  }
+}
+
+function clearEntry() {
+  entryNums = [];
+  stripSelected = [];
+  entryOp = null;
+  document.querySelectorAll('.strip-num').forEach(s => s.classList.remove('selected-strip'));
+  if (selectedCell !== null) {
+    puzzle.userEntries[selectedCell] = null; // wipe saved entry
+    const cell = document.querySelector(`.cell[data-idx="${selectedCell}"]`);
+    if (cell) cell.classList.remove('correct', 'wrong');
+    updateCellEntry(selectedCell);
+    // Re-enable any strip numbers whose pair is no longer complete
+    renderStripState();
+    updateProgress();
+  }
+  setStatus('', '');
+}
+
+function tryAutoConfirm() {
+  if (selectedCell === null || entryNums.length < 2 || entryOp === null) return;
+
+  const a = entryNums[0], b = entryNums[1];
+  const result = entryOp === '+' ? a + b : a * b;
+  const target = puzzle.grid[selectedCell].value;
+
+  if (result !== target) {
+    setStatus(`${a} ${entryOp} ${b} = ${result}, not ${target}. Try again.`, 'error');
+    const cell = document.querySelector(`.cell[data-idx="${selectedCell}"]`);
+    cell.classList.add('shake', 'wrong');
+    setTimeout(() => cell.classList.remove('shake', 'wrong'), 500);
+    entryNums = [];
+    entryOp = null;
+    stripSelected = [];
+    document.querySelectorAll('.strip-num').forEach(s => s.classList.remove('selected-strip'));
+    updateCellEntry(selectedCell); // restore blank sub-boxes
+    return;
+  }
+
+  puzzle.userEntries[selectedCell] = { a, b, op: entryOp, si1: stripSelected[0], si2: stripSelected[1] };
+  updateCellEntry(selectedCell);
+  revealHiddenIfPossible();
+  updateStripState();
+  updateProgress();
+
+  const cell = document.querySelector(`.cell[data-idx="${selectedCell}"]`);
+  cell.classList.remove('selected');
+  selectedCell = null;
+  entryNums = [];
+  entryOp = null;
+  stripSelected = [];
+  document.querySelectorAll('.strip-num').forEach(s => s.classList.remove('selected-strip'));
+  updateControlsState();
+  setStatus('', '');
+
+  if (puzzle.userEntries.every(e => e !== null)) {
+    setTimeout(() => checkAll(), 300);
+  }
+}
+
+function renderStripState() {
+  // Re-enable all non-hidden strip tiles first, then disable completed pairs
+  puzzle.strip.forEach((val, si) => {
+    const el = document.querySelector(`.strip-num[data-idx="${si}"]`);
+    if (!el) return;
+    if (el.classList.contains('hidden-num')) return; // still hidden
+    el.classList.remove('used', 'used-once');
+    el.onclick = () => pickStripNum(si, val);
+  });
+  updateStripState();
+}
+
+function updateStripState() {
+  // Count uses per strip index across all confirmed entries
+  const usageCount = new Map(); // stripIdx → count
+
+  puzzle.userEntries.forEach(ue => {
+    if (!ue) return;
+    [ue.si1, ue.si2].forEach(si => {
+      if (si !== undefined) usageCount.set(si, (usageCount.get(si) || 0) + 1);
+    });
+  });
+
+  puzzle.strip.forEach((val, si) => {
+    const el = document.querySelector(`.strip-num[data-idx="${si}"]`);
+    if (!el || el.classList.contains('hidden-num')) return;
+    const count = usageCount.get(si) || 0;
+    if (count >= 2) {
+      el.classList.add('used');
+      el.classList.remove('used-once', 'selected-strip');
+      el.style.removeProperty('opacity');
+      el.style.removeProperty('pointer-events');
+      el.onclick = null;
+    } else if (count === 1) {
+      el.classList.add('used-once');
+      el.classList.remove('used');
+    } else {
+      el.classList.remove('used-once');
+      el.classList.remove('used');
+    }
+  });
+}
+
+function revealHiddenIfPossible() {
+  // If user entered numbers that match hidden strip values, show them
+  puzzle.hidden.forEach(i => {
+    const val = puzzle.strip[i];
+    // Check if this value was used
+    const isUsed = puzzle.userEntries.some(e => e && (e.a === val || e.b === val));
+    if (isUsed) {
+      const el = document.querySelector(`.strip-num[data-idx="${i}"]`);
+      if (el && el.classList.contains('hidden-num')) {
+        el.classList.add('hidden-revealed');
+        el.textContent = val;
+        el.onclick = () => pickStripNum(i, val);
+      }
+    }
+  });
+}
+
+function checkAll() {
+  if (!puzzle) return;
+  let allFilled = true;
+  let allCorrect = true;
+  const errors = [];
+
+  puzzle.userEntries.forEach((ue, i) => {
+    const cell = document.querySelector(`.cell[data-idx="${i}"]`);
+    cell.classList.remove('correct', 'wrong');
+    if (!ue) { allFilled = false; return; }
+
+    const { pair, op } = puzzle.grid[i];
+    const pairMatch = (ue.a === pair.a && ue.b === pair.b) || (ue.a === pair.b && ue.b === pair.a);
+    if (!pairMatch || ue.op !== op) {
+      cell.classList.add('wrong');
+      allCorrect = false;
+      errors.push(i);
+    } else {
+      cell.classList.add('correct');
+    }
+  });
+
+  if (!allFilled) {
+    setTimeout(() => clearCellHighlights(), 3000);
+    return;
+  }
+
+  if (allCorrect) {
+    setStatus('Puzzle solved! 🎉', 'success');
+    setTimeout(() => {
+      document.getElementById('winSub').textContent = `You solved the ${difficulty} puzzle!`;
+      document.getElementById('winOverlay').classList.add('show');
+    }, 400);
+  } else {
+    setStatus(`${errors.length} cell(s) incorrect.`, 'error');
+    setTimeout(() => { setStatus('', ''); clearCellHighlights(); }, 3000);
+  }
+}
+
+function showSolution() {
+  if (!puzzle) return;
+  document.getElementById('checkBtn').disabled = true;
+  puzzle.grid.forEach((cell, i) => {
+    const si1 = puzzle.strip.indexOf(cell.pair.a);
+    const si2 = puzzle.strip.indexOf(cell.pair.b);
+    puzzle.userEntries[i] = { a: cell.pair.a, b: cell.pair.b, op: cell.op, si1, si2 };
+    updateCellEntry(i);
+    const el = document.querySelector(`.cell[data-idx="${i}"]`);
+    el.classList.remove('wrong');
+    el.classList.add('correct');
+  });
+  // Reveal all hidden
+  puzzle.hidden.forEach(i => {
+    const el = document.querySelector(`.strip-num[data-idx="${i}"]`);
+    if (el) {
+      el.classList.remove('hidden-num');
+      el.classList.add('hidden-revealed');
+      el.textContent = puzzle.strip[i];
+    }
+  });
+  setStatus('Solution revealed.', 'info');
+}
+
+function confirmReveal() {
+  document.getElementById('revealModal').classList.remove('show');
+  showSolution();
+}
+
+function updateProgress() {
+  const filled = puzzle ? puzzle.userEntries.filter(e => e !== null).length : 0;
+  document.getElementById('progressCount').textContent = `${filled} / 16`;
+}
+
+// ── Hidden number modal ─────────────────────────────────────────────────
+// We don't tell the player which position they clicked — they just guess a value
+// and we match it against any still-hidden slot that has that value.
+let hiddenModalSourceIdx = null; // which ? tile was clicked (just used to flash feedback)
+
+function openHiddenModal(i) {
+  hiddenModalSourceIdx = i;
+  document.getElementById('hiddenInput').value = '';
+  document.getElementById('hiddenModal').classList.add('show');
+  setTimeout(() => document.getElementById('hiddenInput').focus(), 50);
+}
+
+function closeHiddenModal() {
+  hiddenModalSourceIdx = null;
+  document.getElementById('hiddenModal').classList.remove('show');
+}
+
+function confirmHidden() {
+  const val = parseInt(document.getElementById('hiddenInput').value, 10);
+  if (isNaN(val) || val < 1) return;
+
+  // Find any still-hidden strip slot whose true value matches what the player entered
+  let matchIdx = null;
+  for (const i of puzzle.hidden) {
+    const el = document.querySelector(`.strip-num[data-idx="${i}"]`);
+    if (el && el.classList.contains('hidden-num') && puzzle.strip[i] === val) {
+      matchIdx = i;
+      break;
+    }
+  }
+
+  if (matchIdx !== null) {
+    const el = document.querySelector(`.strip-num[data-idx="${matchIdx}"]`);
+    el.classList.remove('hidden-num');
+    el.classList.add('hidden-revealed');
+    el.textContent = val;
+    el.onclick = () => pickStripNum(matchIdx, val);
+    pickStripNum(matchIdx, val); // auto-fill into active cell slot
+  } else {
+    // Flash the tile that was clicked
+    const src = document.querySelector(`.strip-num[data-idx="${hiddenModalSourceIdx}"]`);
+    if (src) {
+      src.style.borderColor = 'var(--red)';
+      setTimeout(() => src.style.borderColor = '', 900);
+    }
+    setStatus(`${val} isn't one of the hidden values.`, 'error');
+  }
+  closeHiddenModal();
+}
+
+document.addEventListener('keydown', e => {
+  if (document.getElementById('newGameModal').classList.contains('show')) {
+    if (e.key === 'Escape') closeNewGameModal();
+    return;
+  }
+  if (document.getElementById('revealModal').classList.contains('show')) {
+    if (e.key === 'Escape') document.getElementById('revealModal').classList.remove('show');
+    return;
+  }
+  if (!document.getElementById('hiddenModal').classList.contains('show')) return;
+  if (e.key === 'Enter') confirmHidden();
+  if (e.key === 'Escape') closeHiddenModal();
+});
+
+function clearCellHighlights() {
+  document.querySelectorAll('.cell').forEach(c => c.classList.remove('correct', 'wrong'));
+}
+
+function setStatus(msg, type) {
+  const bar = document.getElementById('statusBar');
+  bar.textContent = msg;
+  bar.className = 'status-bar ' + (type || 'empty');
+}
+
+// Init op buttons
+// Generate first puzzle
+// Close how-to modal on outside click is handled inline on the modal element
+generatePuzzle();
+</script>
+</body>
+</html>
