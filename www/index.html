@@ -535,7 +535,7 @@
   }
 
   .small-print {
-    margin-top: 32px;
+    margin-top: 8px;
     margin-bottom: 12px;
     font-size: 0.7rem;
     color: var(--muted);
@@ -671,7 +671,7 @@
 <div class="how-to-modal" id="privacyModal" onclick="if(event.target===this)this.classList.remove('show')">
   <div class="privacy-box">
     <div class="privacy-title">Privacy Policy</div>
-    <p>Tetonor does not collect, store, or share any personal data. The app has no user accounts, no analytics, no advertising, and no network communication of any kind initiated by the app itself.</p>
+    <p>Tetonor does not collect, store, or share any personal data. The app has no user accounts, no analytics, no advertising, and no network communication of any kind.</p>
     <p><strong>Google Fonts.</strong> This app loads fonts from Google Fonts (fonts.googleapis.com). This request is made by your device directly to Google's servers and is subject to <strong><a href="https://policies.google.com/privacy" style="color:var(--accent2)">Google's Privacy Policy</a></strong>. No other third-party services are used.</p>
     <p>If you have any questions, contact: <strong>uKER@outlook.com</strong></p>
   </div>
@@ -713,6 +713,7 @@ function toggleDiffMenu(e) {
 }
 
 let pendingDiff = null;
+let statusTimeout = null;
 
 function chooseDiff(val, label, e) {
   e.stopPropagation();
@@ -1073,6 +1074,7 @@ function tryAutoConfirm() {
 
   const shakeAndReset = (msg) => {
     setStatus(msg, 'error');
+    statusTimeout = setTimeout(() => setStatus('', ''), 3000);
     const cell = document.querySelector(`.cell[data-idx="${selectedCell}"]`);
     cell.classList.add('shake', 'wrong');
     setTimeout(() => cell.classList.remove('shake', 'wrong'), 500);
@@ -1160,10 +1162,7 @@ function updateStripState() {
       el.classList.remove('selected-strip');
       el.style.removeProperty('opacity');
       el.style.removeProperty('pointer-events');
-      el.onclick = () => {
-        if (selectedCell !== null) return;
-        pulseHintCells(si);
-      };
+      el.onclick = () => pulseHintCells(si);
     } else {
       el.classList.remove('used');
     }
@@ -1196,9 +1195,11 @@ function checkAll() {
     cell.classList.remove('correct', 'wrong');
     if (!ue) { allFilled = false; return; }
 
-    const target = puzzle.grid[i].value;
-    const result = ue.op === '+' ? ue.a + ue.b : ue.a * ue.b;
-    if (result !== target) {
+    const gridCell = puzzle.grid[i];
+    const correct = ue.op === gridCell.op &&
+      ((ue.si1 === gridCell.si1 && ue.si2 === gridCell.si2) ||
+       (ue.si1 === gridCell.si2 && ue.si2 === gridCell.si1));
+    if (!correct) {
       cell.classList.add('wrong');
       allCorrect = false;
       errors.push(i);
@@ -1220,7 +1221,7 @@ function checkAll() {
     }, 400);
   } else {
     setStatus(`${errors.length} cell(s) incorrect.`, 'error');
-    setTimeout(() => { setStatus('', ''); clearCellHighlights(); }, 3000);
+    statusTimeout = setTimeout(() => { setStatus('', ''); clearCellHighlights(); }, 3000);
   }
 }
 
@@ -1332,6 +1333,8 @@ function clearCellHighlights() {
 }
 
 function setStatus(msg, type) {
+  clearTimeout(statusTimeout);
+  statusTimeout = null;
   const bar = document.getElementById('statusBar');
   bar.textContent = msg;
   bar.className = 'status-bar ' + (type || 'empty');
