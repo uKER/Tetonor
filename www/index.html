@@ -949,10 +949,6 @@ function pickStripNum(i, val) {
     setStatus('Already have two numbers. Clear to start over.', 'error');
     return;
   }
-  if (entryNums.length === 1 && entryOp === null) {
-    setStatus('Pick an operator first.', 'error');
-    return;
-  }
   // Mark used-per-strip tracking: block picking the same strip tile twice
   if (stripSelected.includes(i)) {
     setStatus('Pick a different strip number.', 'error');
