@@ -524,10 +524,13 @@
   }
 
   @media (max-width: 500px) {
+    body { padding: 12px; }
+    .grid-container { padding: 12px; }
     .strip { grid-template-columns: repeat(8, 1fr); }
     .grid { gap: 6px; }
-    .cell { min-height: 76px; }
-    .cell-target { font-size: 1.8rem; }
+    .cell { min-height: 0; padding: 6px 6px 0 6px; }
+    .cell-target { font-size: 1.8rem; padding-bottom: 6px; }
+    .cell-entry .sub-box { height: 28px; }
   }
 
   .small-print {
