@@ -890,10 +890,7 @@ function renderStrip() {
     div.dataset.val = num;
     div.textContent = puzzle.hidden.has(i) ? '' : num;
     if (puzzle.hidden.has(i)) {
-      div.onclick = () => {
-        if (selectedCell === null) { setStatus('Select a grid cell first.', 'error'); return; }
-        openHiddenModal(i);
-      };
+      div.onclick = () => openHiddenModal(i);
     } else {
       div.onclick = () => pickStripNum(i, num);
     }
