@@ -381,7 +381,8 @@
   border-color: var(--accent) !important;
   color: var(--accent) !important;
 }
-.strip-num.used { opacity: 0.35 !important; border-color: transparent !important; border-style: solid !important; color: var(--muted) !important; pointer-events: none !important; }
+.strip-num.used { opacity: 0.35 !important; border-color: transparent !important; border-style: solid !important; color: var(--muted) !important; cursor: pointer; }
+.strip-num.used:hover { opacity: 0.6 !important; }
   .strip-num.hidden-num {
     color: transparent;
     cursor: pointer;
@@ -441,6 +442,7 @@
     width: 100%;
     outline: none;
     transition: border-color 0.15s;
+    text-align: center;
   }
   .modal-input:focus { border-color: var(--accent2); }
   .modal-row { display: flex; gap: 8px; }
@@ -734,8 +736,13 @@ function confirmNewGame() {
   generatePuzzle();
 }
 
-document.addEventListener('click', () => {
+document.addEventListener('click', e => {
   document.getElementById('diffMenu').classList.remove('open');
+  if (selectedCell !== null
+      && !e.target.closest('.cell, .strip-num, .op-btn, #clearBtn')
+      && !e.target.closest('.modal-backdrop, .how-to-modal, .win-overlay')) {
+    deselectCell();
+  }
 });
 
 // ── Puzzle generation ───────────────────────────────────────────────────
@@ -884,6 +891,19 @@ function renderStrip() {
 }
 
 // ── Interaction ─────────────────────────────────────────────────────────
+function deselectCell() {
+  if (selectedCell === null) return;
+  updateCellEntry(selectedCell);
+  document.querySelectorAll('.cell').forEach(c => c.classList.remove('selected'));
+  entryNums = [];
+  entryOp = null;
+  stripSelected = [];
+  document.querySelectorAll('.strip-num').forEach(s => s.classList.remove('selected-strip'));
+  selectedCell = null;
+  updateControlsState();
+  setStatus('', '');
+}
+
 function selectCell(i) {
   // Reset previous cell's in-progress display
   if (selectedCell !== null && selectedCell !== i) {
@@ -904,7 +924,9 @@ function selectCell(i) {
 
 function pickStripNum(i, val) {
   if (selectedCell === null) {
-    setStatus('Select a grid cell first.', 'error');
+    const cellIdx = puzzle.userEntries.findIndex(ue => ue && (ue.si1 === i || ue.si2 === i));
+    if (cellIdx !== -1) selectCell(cellIdx);
+    else setStatus('Select a grid cell first.', 'error');
     return;
   }
   if (entryNums.length >= 2) {
@@ -969,7 +991,7 @@ function updateControlsState() {
   document.getElementById('opMul').disabled = !hasCell;
   document.getElementById('clearBtn').disabled = !hasCell;
   // Grey out strip numbers (skip used ones — they have their own CSS styling)
-  document.querySelectorAll('.strip-num:not(.used)').forEach(el => {
+  document.querySelectorAll('.strip-num:not(.used):not(.used-once)').forEach(el => {
     el.style.pointerEvents = hasCell ? '' : 'none';
     el.style.opacity = hasCell ? '' : '0.35';
   });
@@ -1079,7 +1101,11 @@ function updateStripState() {
       el.classList.remove('used-once', 'selected-strip');
       el.style.removeProperty('opacity');
       el.style.removeProperty('pointer-events');
-      el.onclick = null;
+      el.onclick = () => {
+        if (selectedCell !== null) return;
+        const cellIdx = puzzle.userEntries.findIndex(ue => ue && (ue.si1 === si || ue.si2 === si));
+        if (cellIdx !== -1) selectCell(cellIdx);
+      };
     } else if (count === 1) {
       el.classList.add('used-once');
       el.classList.remove('used');
@@ -1099,6 +1125,7 @@ function revealHiddenIfPossible() {
     if (isUsed) {
       const el = document.querySelector(`.strip-num[data-idx="${i}"]`);
       if (el && el.classList.contains('hidden-num')) {
+        el.classList.remove('hidden-num');
         el.classList.add('hidden-revealed');
         el.textContent = val;
         el.onclick = () => pickStripNum(i, val);
