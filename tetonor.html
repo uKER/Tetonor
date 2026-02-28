@@ -1296,7 +1296,7 @@ function confirmHidden() {
     el.classList.add('hidden-revealed');
     el.textContent = val;
     el.onclick = () => pickStripNum(matchIdx, val);
-    pickStripNum(matchIdx, val); // auto-fill into active cell slot
+    if (selectedCell !== null) pickStripNum(matchIdx, val);
   } else {
     // Flash the tile that was clicked
     const src = document.querySelector(`.strip-num[data-idx="${hiddenModalSourceIdx}"]`);
