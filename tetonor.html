@@ -490,8 +490,7 @@
     display: none;
     position: fixed;
     inset: 0;
-    background: rgba(15,14,17,0.85);
-    backdrop-filter: blur(8px);
+    background: rgba(0,0,0,0.6);
     z-index: 100;
     align-items: center;
     justify-content: center;
@@ -678,7 +677,7 @@
 </div>
 
 <!-- Win overlay -->
-<div class="win-overlay" id="winOverlay">
+<div class="win-overlay" id="winOverlay" onclick="if(event.target===this)this.classList.remove('show')">
   <div class="win-box">
     <div class="win-title">Solved!</div>
     <div class="win-sub" id="winSub">Excellent arithmetic deduction.</div>
