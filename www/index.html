@@ -1011,6 +1011,10 @@ function updateControlsState() {
       // Fully used tiles: pulse onclick already set by updateStripState, no dimming
       return;
     }
+    if (el.classList.contains('hidden-num') || el.classList.contains('hidden-revealed')) {
+      // Hidden/revealed tiles: always clickable for guessing
+      return;
+    }
     const partial = el.classList.contains('used-plus') || el.classList.contains('used-mul');
     if (partial) {
       // Partially used: allow navigation (no cell selected), block only when cell is filled
