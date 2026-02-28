@@ -802,6 +802,7 @@ function generatePuzzle() {
     strip: stripNums,
     hidden: hiddenSet,
     userEntries: Array(16).fill(null),
+    partialEntries: Array(16).fill(null),
   };
 
   clearState();
@@ -866,10 +867,16 @@ function updateCellEntry(i) {
   if (ue) {
     entry.className = 'cell-entry filled';
     entry.innerHTML = `<span class="sub-box">${ue.a}</span><span class="sub-box sub-op">${ue.op}</span><span class="sub-box">${ue.b}</span>`;
-  } else {
-    entry.className = 'cell-entry';
-    entry.innerHTML = `<span class="sub-box"></span><span class="sub-box sub-op"></span><span class="sub-box"></span>`;
+    return;
   }
+  const pe = puzzle.partialEntries[i];
+  if (pe) {
+    entry.className = 'cell-entry';
+    entry.innerHTML = `<span class="sub-box">${pe.nums[0] ?? ''}</span><span class="sub-box sub-op">${pe.op ?? ''}</span><span class="sub-box">${pe.nums[1] ?? ''}</span>`;
+    return;
+  }
+  entry.className = 'cell-entry';
+  entry.innerHTML = `<span class="sub-box"></span><span class="sub-box sub-op"></span><span class="sub-box"></span>`;
 }
 
 function renderStrip() {
@@ -884,7 +891,6 @@ function renderStrip() {
     if (puzzle.hidden.has(i)) {
       div.onclick = () => {
         if (selectedCell === null) { setStatus('Select a grid cell first.', 'error'); return; }
-        if (entryNums.length >= 1 && entryOp === null) { setStatus('Choose + or × before selecting a second number.', 'error'); return; }
         openHiddenModal(i);
       };
     } else {
@@ -895,8 +901,31 @@ function renderStrip() {
 }
 
 // ── Interaction ─────────────────────────────────────────────────────────
+function savePartialEntry(i) {
+  if (i === null || !puzzle) return;
+  if (entryNums.length > 0 || entryOp !== null) {
+    puzzle.partialEntries[i] = { nums: [...entryNums], op: entryOp, stripSelected: [...stripSelected] };
+  } else {
+    puzzle.partialEntries[i] = null;
+  }
+}
+
+function restorePartialEntry(i) {
+  const pe = puzzle.partialEntries[i];
+  if (pe) {
+    entryNums = [...pe.nums];
+    entryOp = pe.op;
+    stripSelected = [...pe.stripSelected];
+    stripSelected.forEach(si => {
+      const el = document.querySelector(`.strip-num[data-idx="${si}"]`);
+      if (el) el.classList.add('selected-strip');
+    });
+  }
+}
+
 function deselectCell() {
   if (selectedCell === null) return;
+  savePartialEntry(selectedCell);
   updateCellEntry(selectedCell);
   document.querySelectorAll('.cell').forEach(c => c.classList.remove('selected'));
   entryNums = [];
@@ -909,9 +938,9 @@ function deselectCell() {
 }
 
 function selectCell(i) {
-  // Reset previous cell's in-progress display
   if (selectedCell !== null && selectedCell !== i) {
-    updateCellEntry(selectedCell); // restore saved state (or blank)
+    savePartialEntry(selectedCell);
+    updateCellEntry(selectedCell);
   }
   document.querySelectorAll('.cell').forEach(c => c.classList.remove('selected'));
   entryNums = [];
@@ -921,6 +950,7 @@ function selectCell(i) {
 
   selectedCell = i;
   document.querySelector(`.cell[data-idx="${i}"]`).classList.add('selected');
+  if (puzzle.userEntries[i] === null) restorePartialEntry(i);
   updateCellEntry(i);
   updateControlsState();
   setStatus(`${puzzle.grid[i].value}`, 'info');
@@ -1016,7 +1046,8 @@ function clearEntry() {
   entryOp = null;
   document.querySelectorAll('.strip-num').forEach(s => s.classList.remove('selected-strip'));
   if (selectedCell !== null) {
-    puzzle.userEntries[selectedCell] = null; // wipe saved entry
+    puzzle.userEntries[selectedCell] = null;
+    puzzle.partialEntries[selectedCell] = null;
     const cell = document.querySelector(`.cell[data-idx="${selectedCell}"]`);
     if (cell) cell.classList.remove('correct', 'wrong');
     updateCellEntry(selectedCell);
@@ -1042,6 +1073,7 @@ function tryAutoConfirm() {
     entryNums = [];
     entryOp = null;
     stripSelected = [];
+    puzzle.partialEntries[selectedCell] = null;
     document.querySelectorAll('.strip-num').forEach(s => s.classList.remove('selected-strip'));
     updateCellEntry(selectedCell);
   };
@@ -1065,6 +1097,7 @@ function tryAutoConfirm() {
   }
 
   puzzle.userEntries[selectedCell] = { a, b, op: entryOp, si1: stripSelected[0], si2: stripSelected[1] };
+  puzzle.partialEntries[selectedCell] = null;
   updateCellEntry(selectedCell);
   revealHiddenIfPossible();
   updateStripState();
