@@ -179,6 +179,61 @@
   .btn:hover { border-color: var(--accent2); color: var(--accent2); }
   .btn:disabled { opacity: 0.35; cursor: not-allowed; pointer-events: none; }
 
+  .assist-label {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 0.85rem;
+    color: var(--muted);
+    cursor: pointer;
+    user-select: none;
+    white-space: nowrap;
+  }
+  .assist-label input { accent-color: var(--accent2); cursor: pointer; }
+
+  .assist-tip-wrap {
+    position: relative;
+    display: inline-flex;
+    align-items: center;
+  }
+
+  .assist-tip-icon {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 16px;
+    height: 16px;
+    border-radius: 50%;
+    border: 1px solid var(--muted);
+    color: var(--muted);
+    font-size: 0.7rem;
+    cursor: default;
+    line-height: 1;
+    flex-shrink: 0;
+  }
+
+  .assist-tip-box {
+    display: none;
+    position: absolute;
+    bottom: calc(100% + 8px);
+    right: 0;
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 10px 12px;
+    font-size: 0.78rem;
+    color: var(--text);
+    width: 220px;
+    white-space: normal;
+    word-wrap: break-word;
+    line-height: 1.5;
+    z-index: 100;
+    pointer-events: none;
+    box-sizing: border-box;
+  }
+
+  .assist-tip-wrap:hover .assist-tip-box { display: block; }
+
   .btn.primary { background: var(--accent2); border-color: var(--accent2); color: white; }
   .btn.primary:hover { opacity: 0.85; }
 
@@ -331,15 +386,9 @@
 
   .strip-num:hover:not(.hidden-num):not(.used) { border-color: var(--accent2); color: var(--accent2); transform: translateY(-2px); }
   .strip-num.selected-strip { border-color: var(--accent2); background: rgba(124,106,247,0.15); color: var(--accent2); }
-  .strip-num.used-plus::before {
-  content: '+'; position: absolute; bottom: 2px; line-height: 1; left: 6px;
-  font-size: 1.2rem; font-weight: 700;
-  color: var(--accent2); font-family: 'DM Mono', monospace;
-}
-.strip-num.used-mul::after {
-  content: '×'; position: absolute; bottom: 2px; line-height: 1; right: 6px;
-  font-size: 1.2rem; font-weight: 700;
-  color: var(--accent2); font-family: 'DM Mono', monospace;
+  .strip-num.used-once {
+  border-color: var(--accent) !important;
+  color: var(--accent) !important;
 }
 .strip-num.used { opacity: 0.35 !important; border-color: transparent !important; border-style: solid !important; color: var(--muted) !important; cursor: pointer; }
 .strip-num.used:hover { opacity: 0.6 !important; }
@@ -530,7 +579,6 @@
     .cell { min-height: 0; padding: 6px 6px 0 6px; }
     .cell-target { font-size: 1.8rem; padding-bottom: 6px; }
     .cell-entry .sub-box { height: 28px; }
-    .strip-num.used-plus::before, .strip-num.used-mul::after { bottom: 0; }
   }
 
   .small-print {
@@ -583,10 +631,10 @@
 <div class="how-to-modal" id="howToModal" onclick="if(event.target===this)this.classList.remove('show')">
   <div class="how-to-box">
     <div class="how-to-title">How to play</div>
-    Each target number in the top grid is the <strong>sum or product</strong> of two numbers from the bottom strip.
-    Every number from the strip must be used <strong>exactly twice</strong>: once in an addition and once in a multiplication.
-    Click a grid cell to select it, pick two numbers from the strip and an operator (+/×).
-    Hidden numbers in the strip (<strong>?</strong>) must be deduced — click them to enter your guess. They appear in ascending order.
+    Each target number in the grid is the <strong>sum or product</strong> of a pair from the bottom strip.
+    Each pair must be used <strong>exactly twice</strong>: once as addition, once as multiplication.
+    Click a grid cell to select it, pick two strip numbers and an operator (+/×) — the entry confirms automatically.
+    Hidden strip numbers (<strong>?</strong>) must be deduced — click them to enter your guess. They appear in ascending order.
   </div>
 </div>
 
@@ -602,7 +650,14 @@
       </div>
     </div>
   </div>
-  <button class="btn" id="checkBtn" style="margin-left:auto" onclick="checkAll()">Check</button>
+  <label class="assist-label" style="margin-left:auto">
+    <input type="checkbox" id="assistCheck" checked> Assist
+    <span class="assist-tip-wrap">
+      <span class="assist-tip-icon">?</span>
+      <span class="assist-tip-box">When you pick a number that's already been used, Assist automatically fills in its partner and flips the operator (+↔×).</span>
+    </span>
+  </label>
+  <button class="btn" id="checkBtn" onclick="checkAll()">Check</button>
   <button class="btn primary" onclick="document.getElementById('revealModal').classList.add('show')">Reveal</button>
 </div>
 
@@ -615,7 +670,8 @@
   <!-- Strip + controls -->
   <div class="strip-container">
     <div class="strip" id="strip"></div>
-    <div class="entry-row" style="margin-top:14px;">
+    <div style="font-size:0.85rem;color:var(--muted);opacity:0.6;margin-top:6px;">Long press a guessed number to clear it</div>
+    <div class="entry-row" style="margin-top:8px;">
       <button class="op-btn" id="opAdd" onclick="selectOp('+')">+</button>
       <button class="op-btn" id="opMul" onclick="selectOp('×')">×</button>
       <div class="status-bar empty" id="statusBar"></div>
@@ -696,9 +752,9 @@ let stripSelected = [];
 
 // ── Difficulty config ───────────────────────────────────────────────────
 const DIFF = {
-  easy:   { min: 2,  max: 20, hidden: 5 },
-  medium: { min: 5,  max: 35, hidden: 7 },
-  hard:   { min: 10, max: 50, hidden: 11 },
+  easy:   { min: 2,  max: 20, hidden: 5,  pairs: 8 },
+  medium: { min: 5,  max: 35, hidden: 7,  pairs: 8 },
+  hard:   { min: 10, max: 50, hidden: 11, pairs: 8 },
 };
 
 function setDifficulty(d) {
@@ -754,47 +810,42 @@ document.addEventListener('click', e => {
 // ── Puzzle generation ───────────────────────────────────────────────────
 function generatePuzzle() {
   const cfg = DIFF[difficulty];
-  let stripNums, gridValues;
+  let pairs = [];
 
-  // Retry until all grid values are distinct and within limits
-  outer: while (true) {
-    // 1. Generate 16 unique strip numbers in [min, max]
-    const vals = new Set();
+  // Retry until we get exactly 8 pairs
+  while (pairs.length < cfg.pairs) {
+    pairs = [];
+    const usedPairs = new Set();
+    const usedStripVals = new Set();
     let attempts = 0;
-    while (vals.size < 16 && attempts < 10000) {
+    while (pairs.length < cfg.pairs && attempts < 10000) {
       attempts++;
-      vals.add(randInt(cfg.min, cfg.max));
+      const a = randInt(cfg.min, Math.floor(cfg.max * 0.6));
+      const b = randInt(cfg.min, cfg.max);
+      if (a === b) continue;
+      const sum = a + b;
+      const prod = a * b;
+      const key = `${Math.min(a,b)},${Math.max(a,b)}`;
+      if (!usedPairs.has(key) && sum !== prod && sum <= 200 && prod <= 500
+          && !usedStripVals.has(a) && !usedStripVals.has(b)) {
+        usedPairs.add(key);
+        usedStripVals.add(a);
+        usedStripVals.add(b);
+        pairs.push({ a, b, sum, prod });
+      }
     }
-    if (vals.size < 16) continue;
-    stripNums = [...vals].sort((x, y) => x - y);
-
-    // 2. Two independent random permutations of indices 0–15
-    const indices = [...Array(16).keys()];
-    const permA = shuffle([...indices]);
-    const permB = shuffle([...indices]);
-
-    // 3. Build 8 sum cells and 8 product cells
-    gridValues = [];
-    const gridValSet = new Set();
-    for (let k = 0; k < 8; k++) {
-      const si1 = permA[k * 2], si2 = permA[k * 2 + 1];
-      const sum = stripNums[si1] + stripNums[si2];
-      if (sum > 300 || gridValSet.has(sum)) continue outer;
-      gridValSet.add(sum);
-      gridValues.push({ value: sum, op: '+', si1, si2 });
-    }
-    for (let k = 0; k < 8; k++) {
-      const si1 = permB[k * 2], si2 = permB[k * 2 + 1];
-      const prod = stripNums[si1] * stripNums[si2];
-      if (prod > 1500 || gridValSet.has(prod)) continue outer;
-      gridValSet.add(prod);
-      gridValues.push({ value: prod, op: '×', si1, si2 });
-    }
-
-    // 4. Shuffle the 16 grid cells
-    shuffle(gridValues);
-    break;
   }
+
+  // Build 4x4 grid: 16 cells, each pair contributes sum and prod → 16 values
+  const gridValues = [];
+  for (const p of pairs) {
+    gridValues.push({ value: p.sum, pair: p, op: '+' });
+    gridValues.push({ value: p.prod, pair: p, op: '×' });
+  }
+  shuffle(gridValues);
+
+  // Strip: all a's and b's sorted
+  const stripNums = pairs.flatMap(p => [p.a, p.b]).sort((x,y) => x - y);
 
   // Choose hidden indices
   const hiddenSet = new Set();
@@ -805,6 +856,7 @@ function generatePuzzle() {
   puzzle = {
     grid: gridValues,
     strip: stripNums,
+    pairs,
     hidden: hiddenSet,
     userEntries: Array(16).fill(null),
     partialEntries: Array(16).fill(null),
@@ -939,7 +991,7 @@ function deselectCell() {
   setStatus('', '');
 }
 
-function selectCell(i) {
+function selectCell(i, clearFilled = false) {
   if (selectedCell !== null && selectedCell !== i) {
     savePartialEntry(selectedCell);
     updateCellEntry(selectedCell);
@@ -952,7 +1004,17 @@ function selectCell(i) {
 
   selectedCell = i;
   document.querySelector(`.cell[data-idx="${i}"]`).classList.add('selected');
-  if (puzzle.userEntries[i] === null) restorePartialEntry(i);
+
+  if (clearFilled && puzzle.userEntries[i] !== null) {
+    puzzle.userEntries[i] = null;
+    puzzle.partialEntries[i] = null;
+    document.querySelector(`.cell[data-idx="${i}"]`).classList.remove('correct', 'wrong');
+    renderStripState();
+    updateProgress();
+  } else if (puzzle.userEntries[i] === null) {
+    restorePartialEntry(i);
+  }
+
   updateCellEntry(i);
   updateControlsState();
   setStatus(`${puzzle.grid[i].value}`, 'info');
@@ -981,7 +1043,7 @@ function pickStripNum(i, val) {
     setStatus('Already have two numbers. Clear to start over.', 'error');
     return;
   }
-  // Mark used-per-strip tracking: block picking the same strip tile twice
+  // Block picking the same strip tile twice
   if (stripSelected.includes(i)) {
     setStatus('Pick a different strip number.', 'error');
     return;
@@ -992,6 +1054,31 @@ function pickStripNum(i, val) {
   const bar = document.getElementById('statusBar');
   if (bar.classList.contains('error')) setStatus(`${puzzle.grid[selectedCell].value}`, 'info');
   updateEntryDisplay();
+
+  // Assist: if this is the first number and assist is on, look for a prior use of this value
+  if (entryNums.length === 1 && document.getElementById('assistCheck').checked) {
+    for (let ci = 0; ci < puzzle.userEntries.length; ci++) {
+      const ue = puzzle.userEntries[ci];
+      if (!ue) continue;
+      if (ue.a === val || ue.b === val) {
+        const partner = ue.a === val ? ue.b : ue.a;
+        const oppositeOp = ue.op === '+' ? '×' : '+';
+        entryOp = oppositeOp;
+        updateEntryDisplay();
+        const partnerIdx = puzzle.strip.findIndex((n, si) => n === partner &&
+          !document.querySelector(`.strip-num[data-idx="${si}"]`).classList.contains('used') &&
+          !stripSelected.includes(si));
+        if (partnerIdx !== -1) {
+          stripSelected.push(partnerIdx);
+          entryNums.push(partner);
+          document.querySelector(`.strip-num[data-idx="${partnerIdx}"]`).classList.add('selected-strip');
+          updateEntryDisplay();
+        }
+        break;
+      }
+    }
+  }
+
   updateControlsState();
 }
 
@@ -1019,7 +1106,7 @@ function updateControlsState() {
       // Hidden/revealed tiles: always clickable for guessing
       return;
     }
-    const partial = el.classList.contains('used-plus') || el.classList.contains('used-mul');
+    const partial = el.classList.contains('used-once');
     if (partial) {
       // Partially used: allow navigation (no cell selected), block only when cell is filled
       el.style.pointerEvents = cellFilled ? 'none' : '';
@@ -1068,40 +1155,6 @@ function tryAutoConfirm() {
   if (selectedCell === null || entryNums.length < 2 || entryOp === null) return;
 
   const a = entryNums[0], b = entryNums[1];
-  const result = entryOp === '+' ? a + b : a * b;
-  const target = puzzle.grid[selectedCell].value;
-
-  const shakeAndReset = (msg) => {
-    setStatus(msg, 'error');
-    statusTimeout = setTimeout(() => setStatus('', ''), 3000);
-    const cell = document.querySelector(`.cell[data-idx="${selectedCell}"]`);
-    cell.classList.add('shake', 'wrong');
-    setTimeout(() => cell.classList.remove('shake', 'wrong'), 500);
-    entryNums = [];
-    entryOp = null;
-    stripSelected = [];
-    puzzle.partialEntries[selectedCell] = null;
-    document.querySelectorAll('.strip-num').forEach(s => s.classList.remove('selected-strip'));
-    updateCellEntry(selectedCell);
-  };
-
-  if (result !== target) {
-    shakeAndReset(`${a} ${entryOp} ${b} = ${result}, not ${target}. Try again.`);
-    return;
-  }
-
-  // Inline constraint check: each strip tile can only be used once per operator
-  for (const si of [stripSelected[0], stripSelected[1]]) {
-    const alreadyUsed = puzzle.userEntries.some(
-      (ue, idx) => idx !== selectedCell && ue &&
-        ue.op === entryOp && (ue.si1 === si || ue.si2 === si)
-    );
-    if (alreadyUsed) {
-      const opName = entryOp === '+' ? 'addition' : 'multiplication';
-      shakeAndReset(`That number was already used in a ${opName} cell.`);
-      return;
-    }
-  }
 
   puzzle.userEntries[selectedCell] = { a, b, op: entryOp, si1: stripSelected[0], si2: stripSelected[1] };
   puzzle.partialEntries[selectedCell] = null;
@@ -1130,40 +1183,39 @@ function renderStripState() {
   puzzle.strip.forEach((val, si) => {
     const el = document.querySelector(`.strip-num[data-idx="${si}"]`);
     if (!el) return;
-    if (el.classList.contains('hidden-num')) return; // still hidden
-    el.classList.remove('used', 'used-plus', 'used-mul');
+    if (el.classList.contains('hidden-num') || el.classList.contains('hidden-revealed')) return;
+    el.classList.remove('used', 'used-once');
     el.onclick = () => pickStripNum(si, val);
   });
   updateStripState();
 }
 
 function updateStripState() {
-  // Track which operators each strip index has been used with
-  const usedPlus = new Set();  // strip indices used in a '+' cell
-  const usedMul = new Set();   // strip indices used in a '×' cell
+  // Count uses per strip index across all confirmed entries
+  const usageCount = new Map(); // stripIdx → count
 
   puzzle.userEntries.forEach(ue => {
     if (!ue) return;
-    const set = ue.op === '+' ? usedPlus : usedMul;
-    set.add(ue.si1);
-    set.add(ue.si2);
+    [ue.si1, ue.si2].forEach(si => {
+      if (si !== undefined) usageCount.set(si, (usageCount.get(si) || 0) + 1);
+    });
   });
 
   puzzle.strip.forEach((val, si) => {
     const el = document.querySelector(`.strip-num[data-idx="${si}"]`);
     if (!el || el.classList.contains('hidden-num')) return;
-    const hasPlus = usedPlus.has(si);
-    const hasMul = usedMul.has(si);
-    el.classList.toggle('used-plus', hasPlus);
-    el.classList.toggle('used-mul', hasMul);
-    if (hasPlus && hasMul) {
+    const count = usageCount.get(si) || 0;
+    if (count >= 2) {
       el.classList.add('used');
-      el.classList.remove('selected-strip');
+      el.classList.remove('used-once', 'selected-strip');
       el.style.removeProperty('opacity');
       el.style.removeProperty('pointer-events');
-      el.onclick = () => pulseHintCells(si);
-    } else {
+      el.onclick = () => { if (selectedCell === null) pulseHintCells(si); };
+    } else if (count === 1) {
+      el.classList.add('used-once');
       el.classList.remove('used');
+    } else {
+      el.classList.remove('used-once', 'used');
     }
   });
 }
@@ -1177,7 +1229,11 @@ function revealHiddenIfPossible() {
         el.classList.remove('hidden-num');
         el.classList.add('hidden-revealed');
         el.textContent = puzzle.strip[i];
-        el.onclick = () => pickStripNum(i, puzzle.strip[i]);
+        el.onclick = () => {
+          if (suppressNextClick) { suppressNextClick = false; return; }
+          pickStripNum(i, puzzle.strip[i]);
+        };
+        addLongPress(el, () => clearHiddenTile(i));
       }
     }
   });
@@ -1194,11 +1250,9 @@ function checkAll() {
     cell.classList.remove('correct', 'wrong');
     if (!ue) { allFilled = false; return; }
 
-    const gridCell = puzzle.grid[i];
-    const correct = ue.op === gridCell.op &&
-      ((ue.si1 === gridCell.si1 && ue.si2 === gridCell.si2) ||
-       (ue.si1 === gridCell.si2 && ue.si2 === gridCell.si1));
-    if (!correct) {
+    const { pair, op } = puzzle.grid[i];
+    const pairMatch = (ue.a === pair.a && ue.b === pair.b) || (ue.a === pair.b && ue.b === pair.a);
+    if (!pairMatch || ue.op !== op) {
       cell.classList.add('wrong');
       allCorrect = false;
       errors.push(i);
@@ -1228,13 +1282,9 @@ function showSolution() {
   if (!puzzle) return;
   document.getElementById('checkBtn').disabled = true;
   puzzle.grid.forEach((cell, i) => {
-    puzzle.userEntries[i] = {
-      a: puzzle.strip[cell.si1],
-      b: puzzle.strip[cell.si2],
-      op: cell.op,
-      si1: cell.si1,
-      si2: cell.si2,
-    };
+    const si1 = puzzle.strip.indexOf(cell.pair.a);
+    const si2 = puzzle.strip.indexOf(cell.pair.b);
+    puzzle.userEntries[i] = { a: cell.pair.a, b: cell.pair.b, op: cell.op, si1, si2 };
     updateCellEntry(i);
     const el = document.querySelector(`.cell[data-idx="${i}"]`);
     el.classList.remove('wrong');
@@ -1264,15 +1314,61 @@ function updateProgress() {
 }
 
 // ── Hidden number modal ─────────────────────────────────────────────────
-// We don't tell the player which position they clicked — they just guess a value
-// and we match it against any still-hidden slot that has that value.
-let hiddenModalSourceIdx = null; // which ? tile was clicked (just used to flash feedback)
+let hiddenModalSourceIdx = null;
+let suppressNextClick = false;
+
+function addLongPress(el, callback) {
+  let timer = null, startX, startY;
+  el.addEventListener('pointerdown', e => {
+    startX = e.clientX; startY = e.clientY;
+    timer = setTimeout(() => { timer = null; suppressNextClick = true; callback(); }, 500);
+  });
+  const cancel = () => { clearTimeout(timer); timer = null; };
+  el.addEventListener('pointerup', cancel);
+  el.addEventListener('pointercancel', cancel);
+  el.addEventListener('pointermove', e => {
+    if (timer && (Math.abs(e.clientX - startX) > 8 || Math.abs(e.clientY - startY) > 8)) cancel();
+  });
+  el.addEventListener('contextmenu', e => e.preventDefault());
+}
 
 function openHiddenModal(i) {
   hiddenModalSourceIdx = i;
   document.getElementById('hiddenInput').value = '';
   document.getElementById('hiddenModal').classList.add('show');
   setTimeout(() => document.getElementById('hiddenInput').focus(), 50);
+}
+
+function clearHiddenTile(i) {
+  // Clear cells that used this strip tile
+  let clearedSelected = false;
+  puzzle.userEntries.forEach((ue, ci) => {
+    if (!ue || (ue.si1 !== i && ue.si2 !== i)) return;
+    if (ci === selectedCell) clearedSelected = true;
+    puzzle.userEntries[ci] = null;
+    puzzle.partialEntries[ci] = null;
+    document.querySelector(`.cell[data-idx="${ci}"]`)?.classList.remove('correct', 'wrong');
+    updateCellEntry(ci);
+  });
+  if (clearedSelected) {
+    entryNums = [];
+    entryOp = null;
+    stripSelected = [];
+    document.querySelectorAll('.strip-num').forEach(s => s.classList.remove('selected-strip'));
+  }
+
+  // Replace element with a fresh clone to shed all event listeners
+  const el = document.querySelector(`.strip-num[data-idx="${i}"]`);
+  if (el) {
+    const fresh = el.cloneNode(false);
+    fresh.className = 'strip-num hidden-num';
+    fresh.textContent = '';
+    fresh.onclick = () => openHiddenModal(i);
+    el.parentNode.replaceChild(fresh, el);
+  }
+
+  renderStripState();
+  updateProgress();
 }
 
 function closeHiddenModal() {
@@ -1284,31 +1380,20 @@ function confirmHidden() {
   const val = parseInt(document.getElementById('hiddenInput').value, 10);
   if (isNaN(val) || val < 1) return;
 
-  // Find any still-hidden strip slot whose true value matches what the player entered
-  let matchIdx = null;
-  for (const i of puzzle.hidden) {
-    const el = document.querySelector(`.strip-num[data-idx="${i}"]`);
-    if (el && el.classList.contains('hidden-num') && puzzle.strip[i] === val) {
-      matchIdx = i;
-      break;
-    }
-  }
-
-  if (matchIdx !== null) {
-    const el = document.querySelector(`.strip-num[data-idx="${matchIdx}"]`);
+  const i = hiddenModalSourceIdx;
+  const el = document.querySelector(`.strip-num[data-idx="${i}"]`);
+  if (el) {
     el.classList.remove('hidden-num');
     el.classList.add('hidden-revealed');
     el.textContent = val;
-    el.onclick = () => pickStripNum(matchIdx, val);
-    if (selectedCell !== null) pickStripNum(matchIdx, val);
-  } else {
-    // Flash the tile that was clicked
-    const src = document.querySelector(`.strip-num[data-idx="${hiddenModalSourceIdx}"]`);
-    if (src) {
-      src.style.borderColor = 'var(--red)';
-      setTimeout(() => src.style.borderColor = '', 900);
-    }
-    setStatus(`${val} isn't one of the hidden values.`, 'error');
+    el.onclick = () => {
+      if (suppressNextClick) { suppressNextClick = false; return; }
+      pickStripNum(i, val);
+    };
+    addLongPress(el, () => clearHiddenTile(i));
+    renderStripState();
+    updateProgress();
+    if (selectedCell !== null) pickStripNum(i, val);
   }
   closeHiddenModal();
 }
