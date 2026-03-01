@@ -816,7 +816,6 @@ function generatePuzzle() {
   while (pairs.length < cfg.pairs) {
     pairs = [];
     const usedPairs = new Set();
-    const usedStripVals = new Set();
     let attempts = 0;
     while (pairs.length < cfg.pairs && attempts < 10000) {
       attempts++;
@@ -826,11 +825,8 @@ function generatePuzzle() {
       const sum = a + b;
       const prod = a * b;
       const key = `${Math.min(a,b)},${Math.max(a,b)}`;
-      if (!usedPairs.has(key) && sum !== prod && sum <= 200 && prod <= 500
-          && !usedStripVals.has(a) && !usedStripVals.has(b)) {
+      if (!usedPairs.has(key) && sum !== prod && sum <= 200 && prod <= 500) {
         usedPairs.add(key);
-        usedStripVals.add(a);
-        usedStripVals.add(b);
         pairs.push({ a, b, sum, prod });
       }
     }
