@@ -1,0 +1,7 @@
+<?xml version='1.0' encoding='utf-8'?>
+<resources>
+    <string name="app_name">Tetonor</string>
+    <string name="title_activity_main">Tetonor</string>
+    <string name="package_name">com.uker.tetonor</string>
+    <string name="custom_url_scheme">com.uker.tetonor</string>
+</resources>
